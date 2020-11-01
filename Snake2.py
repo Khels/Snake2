@@ -103,8 +103,10 @@ class Snake:
 
     def change_direction(self, event):
         if event.key in self.mapping:
-            if event.key != self.direction[1]:
-                self.direction = self.mapping[event.key]
+            # if TELEPORT is True and self.out_of_bounds() is False:
+            if self.out_of_bounds() is False:
+                if event.key != self.direction[1]:
+                    self.direction = self.mapping[event.key]
 
     def eat(self):
         global all_sprites
@@ -161,7 +163,8 @@ while IN_GAME:
             snake.change_direction(event)
 
     snake.move()
-    if TELEPORT is False and snake.out_of_bounds():
+    
+    if TELEPORT is False and snake.out_of_bounds() is True:
         IN_GAME = False
         break
     elif snake.body[-1].rect.topleft == food.rect.topleft:
