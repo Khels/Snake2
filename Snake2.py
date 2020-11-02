@@ -20,6 +20,14 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
 
+# setting up the main window
+pg.init()
+pg.mixer.init()
+screen = pg.display.set_mode((WIDTH, HEIGHT))
+pg.display.set_caption('Rebuild of Evangelion: 4.0+Snake')
+clock = pg.time.Clock()
+
+
 # classes and sprites
 class Segment(pg.sprite.Sprite):
 
@@ -137,49 +145,71 @@ def spawn_food():
     food.update(x, y)
 
 
-# setting up main window
-pg.init()
-pg.mixer.init()
-screen = pg.display.set_mode((WIDTH, HEIGHT))
-pg.display.set_caption('Rebuild of Evangelion: 4.0+Snake')
-clock = pg.time.Clock()
-all_sprites = pg.sprite.Group()
-snake = Snake()
-food = Food()
-for seg in snake.body:
-    all_sprites.add(seg)
-all_sprites.add(food)
-spawn_food()
+def start_game():
+    global all_sprites, snake, food
+    all_sprites = pg.sprite.Group()
+    snake = Snake()
+    food = Food()
+    for seg in snake.body:
+        all_sprites.add(seg)
+    all_sprites.add(food)
+    spawn_food()
+    main()
 
 
-# the main loop
-while IN_GAME:
-    clock.tick(SPEED)
-
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            exit()
-        elif event.type == pg.KEYDOWN:
-            snake.change_direction(event)
-
-    snake.move()
-    
-    if TELEPORT is False and snake.out_of_bounds() is True:
-        IN_GAME = False
-        break
-    elif snake.body[-1].rect.topleft == food.rect.topleft:
-        snake.eat()
-        spawn_food()
-
-    elif snake.collides():
-        IN_GAME = False
-        break
-
-    # print(f'Top: {snake.body[-1].rect.top}, bottom: {snake.body[-1].rect.bottom}, left: {snake.body[-1].rect.left}, right: {snake.body[-1].rect.right}')
+def restart_game():
+    global IN_GAME
+    IN_GAME = True
+    print('restart')
     screen.fill(BLACK)
-    all_sprites.draw(screen)
     pg.display.flip()
+    start_game()
 
-    # pg.display.update()
+
+# the main function
+def main():
+    global IN_GAME
+
+    all_sprites.draw(screen)
+    while IN_GAME:
+        clock.tick(SPEED)
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                exit()
+            elif event.type == pg.KEYDOWN:
+                snake.change_direction(event)
+
+        snake.move()
+
+        if TELEPORT is False and snake.out_of_bounds() is True:
+            IN_GAME = False
+            break
+        elif snake.body[-1].rect.topleft == food.rect.topleft:
+            snake.eat()
+            spawn_food()
+
+        elif snake.collides():
+            IN_GAME = False
+            break
+
+        screen.fill(BLACK)
+        all_sprites.draw(screen)
+        pg.display.flip()
+
+        # pg.display.update()
+
+    while True:
+        clock.tick(SPEED)
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                exit()
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_r:
+                    print('R pressed.')
+                    restart_game()
+
+
+start_game()
 
 pg.quit()
