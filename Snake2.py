@@ -8,8 +8,9 @@ WIDTH = 800
 HEIGHT = 800
 SEG_SIZE = 50
 IN_GAME = True
-SPEED = 10
-TELEPORT = True
+SPEED = 12
+TELEPORT = [(True, 'ON'), (False, 'OFF')]
+TELEPORT_MODE = TELEPORT[0]
 
 
 # colors
@@ -18,6 +19,14 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+ORANGE = (238, 118, 0)
+
+
+DIFFICULTIES = {
+    'pathetic': ['pathetic', 8, ORANGE],
+    'pilot': ['> pilot', 12, WHITE],
+    'martyr': ['martyr', 16, ORANGE]
+}
 
 
 # setting up the main window
@@ -26,6 +35,18 @@ pg.mixer.init()
 screen = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption('Rebuild of Evangelion: 4.0+Snake')
 clock = pg.time.Clock()
+
+
+# all fonts and texts for messages
+font_rec = pg.font.SysFont('arial', 16)
+font_menu = pg.font.SysFont('arial', 20)
+defeat_lines = ['HUMANITY IS DOOMED.',
+                'YOU CANNOT REDO.',
+                'OR CAN YOU?..',
+                'PRESS R']
+pause_lines = ['YOU CAN REST FOR NOW',
+               'BUT YOU WILL NOT STOP',
+               'THE INEVITABLE.']
 
 
 # classes and sprites
@@ -55,7 +76,7 @@ class Head(pg.sprite.Sprite):
     def update(self, x, y):
         self.rect.x += x
         self.rect.y += y
-        if TELEPORT is True:
+        if TELEPORT_MODE[0] is True:
             if self.rect.top < 0:
                 self.rect.top = HEIGHT
             elif self.rect.bottom > HEIGHT:
@@ -103,6 +124,7 @@ class Snake:
         }
 
         self.direction = self.mapping[pg.K_RIGHT]
+        self.length = len(self.body)
 
     def move(self):
         self.body[0].update(self.body[-1].rect.x, self.body[-1].rect.y)
@@ -122,6 +144,7 @@ class Snake:
         new_seg = Segment(back.x, back.y)
         self.body.insert(0, new_seg)
         all_sprites.add(new_seg)
+        self.length += 1
 
     def collides(self):
         head = self.body[-1].rect.topleft
@@ -160,17 +183,109 @@ def start_game():
 def restart_game():
     global IN_GAME
     IN_GAME = True
-    print('restart')
     screen.fill(BLACK)
     pg.display.flip()
     start_game()
 
 
-# the main function
+def draw_text(surf, text, font, color, x, y, centered=True):
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect()
+    if centered is True:
+        text_rect.center = (x, y)
+    else:
+        text_rect.topleft = (x, y)
+    surf.blit(text_surface, text_rect)
+    return text_rect
+
+
+def menu(text, record):
+    global DIFFICULTIES, SPEED, TELEPORT, TELEPORT_MODE
+
+    while True:
+        clock.tick(10)
+
+        screen.fill(BLACK)
+        draw_text(screen, f'record: {record}', font_rec, WHITE, 40, 17)
+
+        for i, line in enumerate(text):
+            draw_text(screen, line, font_menu,
+                      ORANGE, WIDTH/2, HEIGHT/2+i*30)
+
+        draw_text(screen, 'CHOOSE YOUR DESTINY:',
+                  font_menu, ORANGE, WIDTH*3/4, SEG_SIZE)
+
+        dif_rects = []
+        for i, key in enumerate(DIFFICULTIES, 1):
+            dif_rects.append(draw_text(screen, DIFFICULTIES[key][0],
+                             font_menu, DIFFICULTIES[key][2],
+                             WIDTH*3/4, SEG_SIZE+i*30, centered=False))
+
+        draw_text(screen, 'GOING THROUGH WALLS:',
+                  font_menu, ORANGE, WIDTH*1/4, SEG_SIZE)
+
+        on_off = draw_text(screen, TELEPORT_MODE[1], font_menu, WHITE,
+                           WIDTH*1/4+130, SEG_SIZE)
+
+        pg.display.flip()
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                exit()
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_r:
+                    restart_game()
+                if event.key == pg.K_ESCAPE:
+                    return
+            elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                pos = pg.mouse.get_pos()
+                if dif_rects[0].collidepoint(pos):
+                    DIFFICULTIES = {
+                        'pathetic': ['> pathetic', 8, WHITE],
+                        'pilot': ['pilot', 12, ORANGE],
+                        'martyr': ['martyr', 16, ORANGE]
+                    }
+                    SPEED = DIFFICULTIES['pathetic'][1]
+                elif dif_rects[1].collidepoint(pos):
+                    DIFFICULTIES = {
+                        'pathetic': ['pathetic', 8, ORANGE],
+                        'pilot': ['> pilot', 12, WHITE],
+                        'martyr': ['martyr', 16, ORANGE]
+                    }
+                    SPEED = DIFFICULTIES['pilot'][1]
+                elif dif_rects[2].collidepoint(pos):
+                    DIFFICULTIES = {
+                        'pathetic': ['pathetic', 8, ORANGE],
+                        'pilot': ['pilot', 12, ORANGE],
+                        'martyr': ['> martyr', 16, WHITE]
+                    }
+                    SPEED = DIFFICULTIES['martyr'][1]
+                elif on_off.collidepoint(pos):
+                    if TELEPORT_MODE == TELEPORT[0]:
+                        TELEPORT_MODE = TELEPORT[1]
+                    else:
+                        TELEPORT_MODE = TELEPORT[0]
+
+
+def pause():
+    pg.display.update([draw_text(screen, line, font_menu,
+                      ORANGE, WIDTH/2, HEIGHT/2+i*30)
+                      for i, line in enumerate(pause_lines)])
+
+    while True:
+        clock.tick(10)
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                exit()
+            elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                return
+
+
+# the main loop
 def main():
     global IN_GAME
 
-    all_sprites.draw(screen)
     while IN_GAME:
         clock.tick(SPEED)
 
@@ -178,38 +293,45 @@ def main():
             if event.type == pg.QUIT:
                 exit()
             elif event.type == pg.KEYDOWN:
-                snake.change_direction(event)
+                if event.key == pg.K_ESCAPE:
+                    pause()
+                else:
+                    snake.change_direction(event)
 
         snake.move()
 
-        if TELEPORT is False and snake.out_of_bounds() is True:
+        if TELEPORT_MODE[0] is False and snake.out_of_bounds() is True:
             IN_GAME = False
-            break
+            return menu(defeat_lines, snake.length)
+
         elif snake.body[-1].rect.topleft == food.rect.topleft:
             snake.eat()
             spawn_food()
 
         elif snake.collides():
             IN_GAME = False
-            break
+            return menu(defeat_lines, snake.length)
 
         screen.fill(BLACK)
         all_sprites.draw(screen)
+        draw_text(screen, f'record: {str(snake.length)}',
+                  font_rec, WHITE, 40, 17)
         pg.display.flip()
 
         # pg.display.update()
-
-    while True:
-        clock.tick(SPEED)
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                exit()
-            elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_r:
-                    print('R pressed.')
-                    restart_game()
 
 
 start_game()
 
 pg.quit()
+
+# add 8-bit styled soundtrack from Evangelion
+# add pictures to sprites
+# randomized food generation
+# image background during game and after defeat
+# fix the movements
+
+
+# next time I rewrite this, try making Sprites Segment
+# and Head nested in class Snake to for preserving incupsulation
+# principals
