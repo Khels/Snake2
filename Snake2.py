@@ -1,5 +1,5 @@
 import pygame as pg
-import random
+from random import randint
 # from os import path
 
 
@@ -162,9 +162,15 @@ class Snake:
 
 
 def spawn_food():
-    global food
-    x = SEG_SIZE * random.randint(1, (WIDTH-SEG_SIZE) // SEG_SIZE)
-    y = SEG_SIZE * random.randint(1, (HEIGHT-SEG_SIZE) // SEG_SIZE)
+    global food, snake
+
+    snake_segments = [segment.rect.topleft for segment in snake.body]
+
+    while True:
+        x = SEG_SIZE * randint(1, (WIDTH-SEG_SIZE) // SEG_SIZE)
+        y = SEG_SIZE * randint(1, (HEIGHT-SEG_SIZE) // SEG_SIZE)
+        if (x, y) not in snake_segments:
+            break
     food.update(x, y)
 
 
@@ -265,6 +271,7 @@ def menu(text, record):
                         TELEPORT_MODE = TELEPORT[1]
                     else:
                         TELEPORT_MODE = TELEPORT[0]
+                # try using inversion: !TELEPORT[0]
 
 
 def pause():
@@ -327,7 +334,6 @@ pg.quit()
 
 # add 8-bit styled soundtrack from Evangelion
 # add pictures to sprites
-# randomized food generation
 # image background during game and after defeat
 # fix the movements
 
