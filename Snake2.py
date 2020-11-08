@@ -108,18 +108,18 @@ class Snake:
             Head(3*SEG_SIZE, 8*SEG_SIZE)
         ]
 
-        # a dictionary of tuple values where the nested tuple represents
-        # coordinates and the second element represents the prohibited
-        # direction in which the snake will eat itself
+        # a dictionary of tuples where the first nested tuple represents
+        # the coordinates and the second one represents the prohibited
+        # direction (for both types of keys) in which the snake will eat itself
         self.mapping = {
-            pg.K_UP: ((0, -SEG_SIZE), pg.K_DOWN),
-            pg.K_DOWN: ((0, SEG_SIZE), pg.K_UP),
-            pg.K_LEFT: ((-SEG_SIZE, 0), pg.K_RIGHT),
-            pg.K_RIGHT: ((SEG_SIZE, 0), pg.K_LEFT),
-            pg.K_w: ((0, -SEG_SIZE), pg.K_s),
-            pg.K_s: ((0, SEG_SIZE), pg.K_w),
-            pg.K_a: ((-SEG_SIZE, 0), pg.K_d),
-            pg.K_d: ((SEG_SIZE, 0), pg.K_a),
+            pg.K_UP: ((0, -SEG_SIZE), (pg.K_DOWN, pg.K_s)),
+            pg.K_DOWN: ((0, SEG_SIZE), (pg.K_UP, pg.K_w)),
+            pg.K_LEFT: ((-SEG_SIZE, 0), (pg.K_RIGHT, pg.K_d)),
+            pg.K_RIGHT: ((SEG_SIZE, 0), (pg.K_LEFT, pg.K_a)),
+            pg.K_w: ((0, -SEG_SIZE), (pg.K_s, pg.K_DOWN)),
+            pg.K_s: ((0, SEG_SIZE), (pg.K_w, pg.K_UP)),
+            pg.K_a: ((-SEG_SIZE, 0), (pg.K_d, pg.K_RIGHT)),
+            pg.K_d: ((SEG_SIZE, 0), (pg.K_a, pg.K_LEFT)),
         }
 
         self.direction = self.mapping[pg.K_RIGHT]
@@ -132,9 +132,8 @@ class Snake:
 
     def change_direction(self, event):
         if event.key in self.mapping:
-            # if TELEPORT is True and self.out_of_bounds() is False:
             if self.out_of_bounds() is False:
-                if event.key != self.direction[1]:
+                if event.key not in self.direction[1]:
                     self.direction = self.mapping[event.key]
 
     def eat(self):
@@ -204,6 +203,21 @@ def draw_text(surf, text, font, color, x, y, centered=True):
     return text_rect
 
 
+def pause():
+    pg.display.update([draw_text(screen, line, font_menu,
+                      ORANGE, WIDTH/2, HEIGHT/2+i*30)
+                      for i, line in enumerate(pause_lines)])
+
+    while True:
+        clock.tick(10)
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                exit()
+            elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                return
+
+
 def menu(text, record):
     global DIFFICULTIES, SPEED, TELEPORT
 
@@ -249,8 +263,6 @@ def menu(text, record):
             elif event.type == pg.KEYDOWN:
                 if event.key == pg.K_r:
                     restart_game()
-                if event.key == pg.K_ESCAPE:
-                    return
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pg.mouse.get_pos()
                 if dif_rects[0].collidepoint(pos):
@@ -261,21 +273,6 @@ def menu(text, record):
                     SPEED = DIFFICULTIES[2][1]
                 elif on_off.collidepoint(pos):
                     TELEPORT = not TELEPORT
-
-
-def pause():
-    pg.display.update([draw_text(screen, line, font_menu,
-                      ORANGE, WIDTH/2, HEIGHT/2+i*30)
-                      for i, line in enumerate(pause_lines)])
-
-    while True:
-        clock.tick(10)
-
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                exit()
-            elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
-                return
 
 
 # the main loop
@@ -311,10 +308,8 @@ def main():
         screen.fill(BLACK)
         all_sprites.draw(screen)
         draw_text(screen, f'record: {str(snake.length)}',
-                  font_rec, WHITE, 40, 17)
+                  font_rec, WHITE, 17, 17, centered=False)
         pg.display.flip()
-
-        # pg.display.update()
 
 
 start_game()
@@ -324,7 +319,6 @@ pg.quit()
 # add 8-bit styled soundtrack from Evangelion
 # add pictures to sprites
 # image background during game and after defeat
-# fix the movements
 
 
 # next time I rewrite this, try making Sprites Segment
