@@ -8,7 +8,8 @@ WIDTH = 800
 HEIGHT = 800
 SEG_SIZE = 50
 IN_GAME = True
-SPEED = 12
+DIFFICULTIES = (('pathetic', 8), ('pilot', 12), ('martyr', 16))
+SPEED = DIFFICULTIES[1][1]
 TELEPORT = True
 
 
@@ -19,13 +20,6 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 ORANGE = (238, 118, 0)
-
-
-DIFFICULTIES = (
-    ('pathetic', 8),
-    ('pilot', 12),
-    ('martyr', 16)
-)
 
 
 # setting up the main window
