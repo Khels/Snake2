@@ -1,6 +1,6 @@
 import pygame as pg
 from random import randint
-# from os import path
+from os import path
 
 
 # basic variables
@@ -11,6 +11,7 @@ IN_GAME = True
 DIFFICULTIES = (('pathetic', 8), ('pilot', 12), ('martyr', 16))
 SPEED = DIFFICULTIES[1][1]
 TELEPORT = True
+VICTORY = False
 
 
 # colors
@@ -30,6 +31,19 @@ pg.display.set_caption('Rebuild of Evangelion: 4.0+Snake')
 clock = pg.time.Clock()
 
 
+# adding some assets
+game_dir = path.dirname(__file__)
+img_dir = path.join(game_dir, 'img')
+
+field = pg.image.load(path.join(img_dir, 'field.png')).convert()
+field_rect = field.get_rect()
+defeat = pg.image.load(path.join(img_dir, 'defeat.png')).convert()
+defeat_rect = defeat.get_rect()
+head_img = pg.image.load(path.join(img_dir, 'Eva01_head_8px.png')).convert()
+torso_img = pg.image.load(path.join(img_dir, 'Eva01_torso_8px.png')).convert()
+core_img = pg.image.load(path.join(img_dir, 'core_8px.png')).convert()
+
+
 # all fonts and texts for messages
 font_rec = pg.font.SysFont('arial', 16)
 font_menu = pg.font.SysFont('arial', 20)
@@ -47,8 +61,10 @@ class Segment(pg.sprite.Sprite):
 
     def __init__(self, x, y):
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
-        self.image.fill(GREEN)
+        # self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
+        # self.image.fill(GREEN)
+        self.image = pg.transform.scale(torso_img, (SEG_SIZE, SEG_SIZE))
+        self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
 
@@ -61,8 +77,10 @@ class Head(pg.sprite.Sprite):
 
     def __init__(self, x, y):
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
-        self.image.fill(BLUE)
+        # self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
+        # self.image.fill(BLUE)
+        self.image = pg.transform.scale(head_img, (SEG_SIZE, SEG_SIZE))
+        self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
 
@@ -84,8 +102,10 @@ class Food(pg.sprite.Sprite):
 
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
-        self.image.fill(RED)
+        # self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
+        # self.image.fill(RED)
+        self.image = pg.transform.scale(core_img, (SEG_SIZE, SEG_SIZE))
+        self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
 
     def update(self, x, y):
@@ -219,6 +239,7 @@ def menu(text, record):
         clock.tick(10)
 
         screen.fill(BLACK)
+        screen.blit(defeat, defeat_rect)
         draw_text(screen, f'record: {record}', font_rec, WHITE, 40, 17)
 
         for i, line in enumerate(text):
@@ -300,6 +321,7 @@ def main():
             return menu(defeat_lines, snake.length)
 
         screen.fill(BLACK)
+        screen.blit(field, field_rect)
         all_sprites.draw(screen)
         draw_text(screen, f'record: {str(snake.length)}',
                   font_rec, WHITE, 17, 17, centered=False)
