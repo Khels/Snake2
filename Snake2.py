@@ -9,8 +9,7 @@ HEIGHT = 800
 SEG_SIZE = 50
 IN_GAME = True
 SPEED = 12
-TELEPORT = [(True, 'ON'), (False, 'OFF')]
-TELEPORT_MODE = TELEPORT[0]
+TELEPORT = True
 
 
 # colors
@@ -22,11 +21,11 @@ BLUE = (0, 0, 255)
 ORANGE = (238, 118, 0)
 
 
-DIFFICULTIES = {
-    'pathetic': ['pathetic', 8, ORANGE],
-    'pilot': ['> pilot', 12, WHITE],
-    'martyr': ['martyr', 16, ORANGE]
-}
+DIFFICULTIES = (
+    ('pathetic', 8),
+    ('pilot', 12),
+    ('martyr', 16)
+)
 
 
 # setting up the main window
@@ -76,7 +75,7 @@ class Head(pg.sprite.Sprite):
     def update(self, x, y):
         self.rect.x += x
         self.rect.y += y
-        if TELEPORT_MODE[0] is True:
+        if TELEPORT is True:
             if self.rect.top < 0:
                 self.rect.top = HEIGHT
             elif self.rect.bottom > HEIGHT:
@@ -206,7 +205,7 @@ def draw_text(surf, text, font, color, x, y, centered=True):
 
 
 def menu(text, record):
-    global DIFFICULTIES, SPEED, TELEPORT, TELEPORT_MODE
+    global DIFFICULTIES, SPEED, TELEPORT
 
     while True:
         clock.tick(10)
@@ -222,16 +221,25 @@ def menu(text, record):
                   font_menu, ORANGE, WIDTH*3/4, SEG_SIZE)
 
         dif_rects = []
-        for i, key in enumerate(DIFFICULTIES, 1):
-            dif_rects.append(draw_text(screen, DIFFICULTIES[key][0],
-                             font_menu, DIFFICULTIES[key][2],
-                             WIDTH*3/4, SEG_SIZE+i*30, centered=False))
+        for i, dif in enumerate(DIFFICULTIES, 1):
+            if SPEED == dif[1]:
+                dif_text = '> ' + dif[0]
+                color = WHITE
+            else:
+                dif_text = dif[0]
+                color = ORANGE
+
+            dif_rects.append(draw_text(
+                screen, dif_text, font_menu, color,
+                WIDTH*3/4, SEG_SIZE+i*30, centered=False
+                )
+            )
 
         draw_text(screen, 'GOING THROUGH WALLS:',
                   font_menu, ORANGE, WIDTH*1/4, SEG_SIZE)
 
-        on_off = draw_text(screen, TELEPORT_MODE[1], font_menu, WHITE,
-                           WIDTH*1/4+130, SEG_SIZE)
+        on_off = draw_text(screen, 'ON' if TELEPORT else 'OFF',
+                           font_menu, WHITE, WIDTH*1/4+130, SEG_SIZE)
 
         pg.display.flip()
 
@@ -246,32 +254,13 @@ def menu(text, record):
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pg.mouse.get_pos()
                 if dif_rects[0].collidepoint(pos):
-                    DIFFICULTIES = {
-                        'pathetic': ['> pathetic', 8, WHITE],
-                        'pilot': ['pilot', 12, ORANGE],
-                        'martyr': ['martyr', 16, ORANGE]
-                    }
-                    SPEED = DIFFICULTIES['pathetic'][1]
+                    SPEED = DIFFICULTIES[0][1]
                 elif dif_rects[1].collidepoint(pos):
-                    DIFFICULTIES = {
-                        'pathetic': ['pathetic', 8, ORANGE],
-                        'pilot': ['> pilot', 12, WHITE],
-                        'martyr': ['martyr', 16, ORANGE]
-                    }
-                    SPEED = DIFFICULTIES['pilot'][1]
+                    SPEED = DIFFICULTIES[1][1]
                 elif dif_rects[2].collidepoint(pos):
-                    DIFFICULTIES = {
-                        'pathetic': ['pathetic', 8, ORANGE],
-                        'pilot': ['pilot', 12, ORANGE],
-                        'martyr': ['> martyr', 16, WHITE]
-                    }
-                    SPEED = DIFFICULTIES['martyr'][1]
+                    SPEED = DIFFICULTIES[2][1]
                 elif on_off.collidepoint(pos):
-                    if TELEPORT_MODE == TELEPORT[0]:
-                        TELEPORT_MODE = TELEPORT[1]
-                    else:
-                        TELEPORT_MODE = TELEPORT[0]
-                # try using inversion: !TELEPORT[0]
+                    TELEPORT = not TELEPORT
 
 
 def pause():
@@ -307,7 +296,7 @@ def main():
 
         snake.move()
 
-        if TELEPORT_MODE[0] is False and snake.out_of_bounds() is True:
+        if TELEPORT is False and snake.out_of_bounds() is True:
             IN_GAME = False
             return menu(defeat_lines, snake.length)
 
