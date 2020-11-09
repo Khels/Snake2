@@ -41,7 +41,7 @@ defeat = pg.image.load(path.join(img_dir, 'defeat.png')).convert()
 defeat_rect = defeat.get_rect()
 head_img = pg.image.load(path.join(img_dir, 'Eva01_head_8px.png')).convert()
 torso_img = pg.image.load(path.join(img_dir, 'Eva01_torso_8px.png')).convert()
-core_img = pg.image.load(path.join(img_dir, 'core_8px.png')).convert()
+core_img = pg.image.load(path.join(img_dir, 'core_16px.png')).convert()
 
 
 # all fonts and texts for messages
@@ -63,14 +63,29 @@ class Segment(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self)
         # self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
         # self.image.fill(GREEN)
-        self.image = pg.transform.scale(torso_img, (SEG_SIZE, SEG_SIZE))
-        self.image.set_colorkey(WHITE)
+        self.image_orig = pg.transform.scale(torso_img,
+                                             (SEG_SIZE, SEG_SIZE))
+        self.image_orig.set_colorkey(WHITE)
+        self.image = self.image_orig.copy()
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
+        self.rot = 90
 
-    def update(self, x, y):
+    def update(self, x, y, direction):
         self.rect.x = x
         self.rect.y = y
+        self.rotate(direction)
+
+    def rotate(self, direction):
+        if pg.K_UP in direction:
+            rot = 180
+        elif pg.K_DOWN in direction:
+            rot = 0
+        elif pg.K_LEFT in direction:
+            rot = -90
+        elif pg.K_RIGHT in direction:
+            rot = 90
+        self.image = pg.transform.rotate(self.image_orig, rot)
 
 
 class Head(pg.sprite.Sprite):
@@ -79,14 +94,18 @@ class Head(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self)
         # self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
         # self.image.fill(BLUE)
-        self.image = pg.transform.scale(head_img, (SEG_SIZE, SEG_SIZE))
-        self.image.set_colorkey(WHITE)
+        self.image_orig = pg.transform.scale(head_img,
+                                             (SEG_SIZE, SEG_SIZE))
+        self.image_orig.set_colorkey(WHITE)
+        self.image = self.image_orig.copy()
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
+        self.rot = 90
 
-    def update(self, x, y):
+    def update(self, x, y, direction):
         self.rect.x += x
         self.rect.y += y
+        self.rotate(direction)
         if TELEPORT is True:
             if self.rect.top < 0:
                 self.rect.top = HEIGHT
@@ -96,6 +115,17 @@ class Head(pg.sprite.Sprite):
                 self.rect.left = WIDTH
             elif self.rect.right > WIDTH:
                 self.rect.right = 0
+
+    def rotate(self, direction):
+        if pg.K_UP in direction:
+            rot = 180
+        elif pg.K_DOWN in direction:
+            rot = 0
+        elif pg.K_LEFT in direction:
+            rot = -90
+        elif pg.K_RIGHT in direction:
+            rot = 90
+        self.image = pg.transform.rotate(self.image_orig, rot)
 
 
 class Food(pg.sprite.Sprite):
@@ -140,9 +170,11 @@ class Snake:
         self.length = len(self.body)
 
     def move(self):
-        self.body[0].update(self.body[-1].rect.x, self.body[-1].rect.y)
+        self.body[0].update(
+            self.body[-1].rect.x, self.body[-1].rect.y, self.direction[1])
         self.body.insert(-1, self.body.pop(0))
-        self.body[-1].update(self.direction[0][0], self.direction[0][1])
+        self.body[-1].update(
+            self.direction[0][0], self.direction[0][1], self.direction[1])
 
     def change_direction(self, event):
         if event.key in self.mapping:
@@ -333,8 +365,7 @@ start_game()
 pg.quit()
 
 # add 8-bit styled soundtrack from Evangelion
-# add pictures to sprites
-# image background during game and after defeat
+# make victory possible
 
 
 # next time I rewrite this, try making Sprites Segment
