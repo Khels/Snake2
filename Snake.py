@@ -7,6 +7,9 @@ from os import path
 WIDTH = 800
 HEIGHT = 800
 SEG_SIZE = 50
+# WIDTH = 600
+# HEIGHT = 600
+# SEG_SIZE = 100
 IN_GAME = True
 DIFFICULTIES = (('pathetic', 8), ('pilot', 12), ('martyr', 16))
 SPEED = DIFFICULTIES[1][1]
@@ -34,19 +37,22 @@ clock = pg.time.Clock()
 # adding some assets
 game_dir = path.dirname(__file__)
 img_dir = path.join(game_dir, 'img')
+font_dir = path.join(game_dir, 'font')
 
 field = pg.image.load(path.join(img_dir, 'field.png')).convert()
 field_rect = field.get_rect()
 defeat = pg.image.load(path.join(img_dir, 'defeat.png')).convert()
 defeat_rect = defeat.get_rect()
+victory = pg.image.load(path.join(img_dir, 'victory.png')).convert()
+victory_rect = victory.get_rect()
 head_img = pg.image.load(path.join(img_dir, 'Eva01_head_8px.png')).convert()
 torso_img = pg.image.load(path.join(img_dir, 'Eva01_torso_8px.png')).convert()
 core_img = pg.image.load(path.join(img_dir, 'core_16px.png')).convert()
 
 
 # all fonts and texts for messages
-font_rec = pg.font.SysFont('arial', 16)
-font_menu = pg.font.SysFont('arial', 20)
+font_basic = pg.font.SysFont('arial', 20)
+font_menu = pg.font.Font(path.join(font_dir, 'neurotoxin.ttf'), 20)
 defeat_lines = ['HUMANITY IS DOOMED.',
                 'YOU CANNOT REDO.',
                 'OR CAN YOU?..',
@@ -54,6 +60,8 @@ defeat_lines = ['HUMANITY IS DOOMED.',
 pause_lines = ['YOU CAN REST FOR NOW',
                'BUT YOU WILL NOT STOP',
                'THE INEVITABLE.']
+victory_lines = ['OMEDETOU!',
+                 'YOU DID IT SHINJI!']
 
 
 # classes and sprites
@@ -61,8 +69,6 @@ class Segment(pg.sprite.Sprite):
 
     def __init__(self, x, y):
         pg.sprite.Sprite.__init__(self)
-        # self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
-        # self.image.fill(GREEN)
         self.image_orig = pg.transform.scale(torso_img,
                                              (SEG_SIZE, SEG_SIZE))
         self.image_orig.set_colorkey(WHITE)
@@ -92,8 +98,6 @@ class Head(pg.sprite.Sprite):
 
     def __init__(self, x, y):
         pg.sprite.Sprite.__init__(self)
-        # self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
-        # self.image.fill(BLUE)
         self.image_orig = pg.transform.scale(head_img,
                                              (SEG_SIZE, SEG_SIZE))
         self.image_orig.set_colorkey(WHITE)
@@ -132,8 +136,6 @@ class Food(pg.sprite.Sprite):
 
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        # self.image = pg.Surface((SEG_SIZE, SEG_SIZE))
-        # self.image.fill(RED)
         self.image = pg.transform.scale(core_img, (SEG_SIZE, SEG_SIZE))
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
@@ -149,8 +151,30 @@ class Snake:
         self.body = [
             Segment(SEG_SIZE, 8*SEG_SIZE),
             Segment(2*SEG_SIZE, 8*SEG_SIZE),
-            Head(3*SEG_SIZE, 8*SEG_SIZE)
-        ]
+            Head(3*SEG_SIZE, 8*SEG_SIZE)]
+    # Segment(0, SEG_SIZE),
+    # Segment(SEG_SIZE, SEG_SIZE),
+    # Segment(2*SEG_SIZE, SEG_SIZE),
+    # Segment(3*SEG_SIZE, SEG_SIZE),
+    # Segment(4*SEG_SIZE, SEG_SIZE),
+    # Segment(4*SEG_SIZE, 2*SEG_SIZE),
+    # Segment(3*SEG_SIZE, 2*SEG_SIZE),
+    # Segment(2*SEG_SIZE, 2*SEG_SIZE),
+    # Segment(SEG_SIZE, 2*SEG_SIZE),
+    # Segment(0, 2*SEG_SIZE),
+    # Segment(0, 3*SEG_SIZE),
+    # Segment(SEG_SIZE, 3*SEG_SIZE),
+    # Segment(2*SEG_SIZE, 3*SEG_SIZE),
+    # Segment(3*SEG_SIZE, 3*SEG_SIZE),
+    # Segment(4*SEG_SIZE, 3*SEG_SIZE),
+    # Segment(4*SEG_SIZE, 4*SEG_SIZE),
+    # Segment(3*SEG_SIZE, 4*SEG_SIZE),
+    # Segment(2*SEG_SIZE, 4*SEG_SIZE),
+    # Segment(SEG_SIZE, 4*SEG_SIZE),
+    # Segment(0, 4*SEG_SIZE),
+    # Segment(0, 5*SEG_SIZE),
+    # Segment(SEG_SIZE, 5*SEG_SIZE),
+    # Head(2*SEG_SIZE, 5*SEG_SIZE)]
 
         # a dictionary of tuples where the first nested tuple represents
         # the coordinates and the second one represents the prohibited
@@ -206,16 +230,24 @@ class Snake:
 
 
 def spawn_food():
+    # returns True if the food is spawned successfully
+    # or False in the other case
     global food, snake
+    FREE_SPACES = []
 
     snake_segments = [segment.rect.topleft for segment in snake.body]
 
-    while True:
-        x = SEG_SIZE * randint(1, (WIDTH-SEG_SIZE) // SEG_SIZE)
-        y = SEG_SIZE * randint(1, (HEIGHT-SEG_SIZE) // SEG_SIZE)
-        if (x, y) not in snake_segments:
-            break
-    food.update(x, y)
+    for x in range(WIDTH // SEG_SIZE):
+        for y in range(HEIGHT // SEG_SIZE):
+            if (x*SEG_SIZE, y*SEG_SIZE) not in snake_segments:
+                FREE_SPACES.append((x*SEG_SIZE, y*SEG_SIZE))
+
+    if FREE_SPACES:
+        x, y = FREE_SPACES[randint(0, len(FREE_SPACES)-1)]
+        food.update(x, y)
+        return True
+    else:
+        return False
 
 
 def start_game():
@@ -231,8 +263,9 @@ def start_game():
 
 
 def restart_game():
-    global IN_GAME
+    global IN_GAME, VICTORY
     IN_GAME = True
+    VICTORY = False
     screen.fill(BLACK)
     pg.display.flip()
     start_game()
@@ -252,7 +285,7 @@ def draw_text(surf, text, font, color, x, y, centered=True):
 def pause():
     pg.display.update([draw_text(screen, line, font_menu,
                       ORANGE, WIDTH/2, HEIGHT/2+i*30)
-                      for i, line in enumerate(pause_lines)])
+                      for i, line in enumerate(pause_lines, -1)])
 
     while True:
         clock.tick(10)
@@ -265,16 +298,20 @@ def pause():
 
 
 def menu(text, record):
-    global DIFFICULTIES, SPEED, TELEPORT
+    global DIFFICULTIES, SPEED, TELEPORT, VICTORY
+
+    background = victory if VICTORY else defeat
+    background_rect = victory_rect if VICTORY else defeat_rect
 
     while True:
         clock.tick(10)
 
         screen.fill(BLACK)
-        screen.blit(defeat, defeat_rect)
-        draw_text(screen, f'record: {record}', font_rec, WHITE, 40, 17)
+        screen.blit(background, background_rect)
+        draw_text(screen, f'record: {record}',
+                  font_basic, WHITE, 14, 11, centered=False)
 
-        for i, line in enumerate(text):
+        for i, line in enumerate(text, -1):
             draw_text(screen, line, font_menu,
                       ORANGE, WIDTH/2, HEIGHT/2+i*30)
 
@@ -291,7 +328,7 @@ def menu(text, record):
                 color = ORANGE
 
             dif_rects.append(draw_text(
-                screen, dif_text, font_menu, color,
+                screen, dif_text, font_basic, color,
                 WIDTH*3/4, SEG_SIZE+i*30, centered=False
                 )
             )
@@ -300,7 +337,7 @@ def menu(text, record):
                   font_menu, ORANGE, WIDTH*1/4, SEG_SIZE)
 
         on_off = draw_text(screen, 'ON' if TELEPORT else 'OFF',
-                           font_menu, WHITE, WIDTH*1/4+130, SEG_SIZE)
+                           font_basic, WHITE, WIDTH*1/4+160, SEG_SIZE)
 
         pg.display.flip()
 
@@ -324,7 +361,7 @@ def menu(text, record):
 
 # the main loop
 def main():
-    global IN_GAME
+    global IN_GAME, VICTORY
 
     while IN_GAME:
         clock.tick(SPEED)
@@ -346,7 +383,9 @@ def main():
 
         elif snake.body[-1].rect.topleft == food.rect.topleft:
             snake.eat()
-            spawn_food()
+            if not spawn_food():
+                VICTORY = True
+                return menu(victory_lines, snake.length)
 
         elif snake.collides():
             IN_GAME = False
@@ -356,7 +395,7 @@ def main():
         screen.blit(field, field_rect)
         all_sprites.draw(screen)
         draw_text(screen, f'record: {str(snake.length)}',
-                  font_rec, WHITE, 17, 17, centered=False)
+                  font_basic, WHITE, 14, 11, centered=False)
         pg.display.flip()
 
 
@@ -365,7 +404,6 @@ start_game()
 pg.quit()
 
 # add 8-bit styled soundtrack from Evangelion
-# make victory possible
 
 
 # next time I rewrite this, try making Sprites Segment
