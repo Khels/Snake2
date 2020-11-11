@@ -357,7 +357,7 @@ def main():
         elif snake.body[-1].rect.topleft == food.rect.topleft:
             snake.eat()
             eat_snd.play()
-            if snake.length == 20:
+            if snake.length == 50:
                 VICTORY = True
                 return menu(victory_lines, snake.length)
             spawn_food()
