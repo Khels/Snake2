@@ -356,17 +356,16 @@ def main():
 
         elif snake.body[-1].rect.topleft == food.rect.topleft:
             snake.eat()
-            spawn_food()
             eat_snd.play()
+            if snake.length == 20:
+                VICTORY = True
+                return menu(victory_lines, snake.length)
+            spawn_food()
 
         elif snake.collides():
             IN_GAME = False
             collision_snd.play()
             return menu(defeat_lines, snake.length)
-
-        elif snake.length == 20:
-            VICTORY = True
-            return menu(victory_lines, snake.length)
 
         screen.fill(BLACK)
         screen.blit(field, field_rect)
