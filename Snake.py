@@ -212,24 +212,14 @@ class Snake:
 
 
 def spawn_food():
-    # returns True if the food is spawned successfully
-    # or False in the other case
     global food, snake
-    FREE_SPACES = []
-
     snake_segments = [segment.rect.topleft for segment in snake.body]
-
-    for x in range(WIDTH // SEG_SIZE):
-        for y in range(HEIGHT // SEG_SIZE):
-            if (x*SEG_SIZE, y*SEG_SIZE) not in snake_segments:
-                FREE_SPACES.append((x*SEG_SIZE, y*SEG_SIZE))
-
-    if FREE_SPACES:
-        x, y = FREE_SPACES[randint(0, len(FREE_SPACES)-1)]
-        food.update(x, y)
-        return True
-    else:
-        return False
+    while True:
+        x = SEG_SIZE * randint(1, (WIDTH-SEG_SIZE) // SEG_SIZE)
+        y = SEG_SIZE * randint(1, (HEIGHT-SEG_SIZE) // SEG_SIZE)
+        if (x, y) not in snake_segments:
+            break
+    food.update(x, y)
 
 
 def start_game():
@@ -366,15 +356,17 @@ def main():
 
         elif snake.body[-1].rect.topleft == food.rect.topleft:
             snake.eat()
+            spawn_food()
             eat_snd.play()
-            if not spawn_food():
-                VICTORY = True
-                return menu(victory_lines, snake.length)
 
         elif snake.collides():
             IN_GAME = False
             collision_snd.play()
             return menu(defeat_lines, snake.length)
+
+        elif snake.length == 20:
+            VICTORY = True
+            return menu(victory_lines, snake.length)
 
         screen.fill(BLACK)
         screen.blit(field, field_rect)
