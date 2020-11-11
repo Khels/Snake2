@@ -7,9 +7,6 @@ from os import path
 WIDTH = 800
 HEIGHT = 800
 SEG_SIZE = 50
-# WIDTH = 600
-# HEIGHT = 600
-# SEG_SIZE = 100
 IN_GAME = True
 DIFFICULTIES = (('pathetic', 8), ('pilot', 12), ('martyr', 16))
 SPEED = DIFFICULTIES[1][1]
@@ -38,6 +35,7 @@ clock = pg.time.Clock()
 game_dir = path.dirname(__file__)
 img_dir = path.join(game_dir, 'img')
 font_dir = path.join(game_dir, 'font')
+snds_dir = path.join(game_dir, 'snds')
 
 field = pg.image.load(path.join(img_dir, 'field.png')).convert()
 field_rect = field.get_rect()
@@ -48,6 +46,13 @@ victory_rect = victory.get_rect()
 head_img = pg.image.load(path.join(img_dir, 'Eva01_head_8px.png')).convert()
 torso_img = pg.image.load(path.join(img_dir, 'Eva01_torso_8px.png')).convert()
 core_img = pg.image.load(path.join(img_dir, 'core_16px.png')).convert()
+
+eat_snd = pg.mixer.Sound(path.join(snds_dir, 'Powerup.wav'))
+collision_snd = pg.mixer.Sound(path.join(snds_dir, 'Explosion.wav'))
+pg.mixer.music.load(path.join(snds_dir, 'music.mp3'))
+pg.mixer.music.set_volume(0.2)
+eat_snd.set_volume(0.1)
+collision_snd.set_volume(0.1)
 
 
 # all fonts and texts for messages
@@ -152,29 +157,6 @@ class Snake:
             Segment(SEG_SIZE, 8*SEG_SIZE),
             Segment(2*SEG_SIZE, 8*SEG_SIZE),
             Head(3*SEG_SIZE, 8*SEG_SIZE)]
-    # Segment(0, SEG_SIZE),
-    # Segment(SEG_SIZE, SEG_SIZE),
-    # Segment(2*SEG_SIZE, SEG_SIZE),
-    # Segment(3*SEG_SIZE, SEG_SIZE),
-    # Segment(4*SEG_SIZE, SEG_SIZE),
-    # Segment(4*SEG_SIZE, 2*SEG_SIZE),
-    # Segment(3*SEG_SIZE, 2*SEG_SIZE),
-    # Segment(2*SEG_SIZE, 2*SEG_SIZE),
-    # Segment(SEG_SIZE, 2*SEG_SIZE),
-    # Segment(0, 2*SEG_SIZE),
-    # Segment(0, 3*SEG_SIZE),
-    # Segment(SEG_SIZE, 3*SEG_SIZE),
-    # Segment(2*SEG_SIZE, 3*SEG_SIZE),
-    # Segment(3*SEG_SIZE, 3*SEG_SIZE),
-    # Segment(4*SEG_SIZE, 3*SEG_SIZE),
-    # Segment(4*SEG_SIZE, 4*SEG_SIZE),
-    # Segment(3*SEG_SIZE, 4*SEG_SIZE),
-    # Segment(2*SEG_SIZE, 4*SEG_SIZE),
-    # Segment(SEG_SIZE, 4*SEG_SIZE),
-    # Segment(0, 4*SEG_SIZE),
-    # Segment(0, 5*SEG_SIZE),
-    # Segment(SEG_SIZE, 5*SEG_SIZE),
-    # Head(2*SEG_SIZE, 5*SEG_SIZE)]
 
         # a dictionary of tuples where the first nested tuple represents
         # the coordinates and the second one represents the prohibited
@@ -379,16 +361,19 @@ def main():
 
         if TELEPORT is False and snake.out_of_bounds() is True:
             IN_GAME = False
+            collision_snd.play()
             return menu(defeat_lines, snake.length)
 
         elif snake.body[-1].rect.topleft == food.rect.topleft:
             snake.eat()
+            eat_snd.play()
             if not spawn_food():
                 VICTORY = True
                 return menu(victory_lines, snake.length)
 
         elif snake.collides():
             IN_GAME = False
+            collision_snd.play()
             return menu(defeat_lines, snake.length)
 
         screen.fill(BLACK)
@@ -399,13 +384,7 @@ def main():
         pg.display.flip()
 
 
+pg.mixer.music.play(loops=-1)
 start_game()
 
 pg.quit()
-
-# add 8-bit styled soundtrack from Evangelion
-
-
-# next time I rewrite this, try making Sprites Segment
-# and Head nested in class Snake to for preserving incupsulation
-# principals
