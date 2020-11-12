@@ -1,5 +1,6 @@
 import pygame as pg
 from random import randint
+from sys import exit
 from os import path
 
 
@@ -357,7 +358,7 @@ def main():
         elif snake.body[-1].rect.topleft == food.rect.topleft:
             snake.eat()
             eat_snd.play()
-            if snake.length == 50:
+            if snake.length == 120:
                 VICTORY = True
                 return menu(victory_lines, snake.length)
             spawn_food()
