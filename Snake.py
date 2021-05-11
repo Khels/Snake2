@@ -50,7 +50,7 @@ core_img = pg.image.load(path.join(img_dir, 'core_16px.png')).convert()
 
 eat_snd = pg.mixer.Sound(path.join(snds_dir, 'Powerup.wav'))
 collision_snd = pg.mixer.Sound(path.join(snds_dir, 'Explosion.wav'))
-pg.mixer.music.load(path.join(snds_dir, 'music.mp3'))
+pg.mixer.music.load(path.join(snds_dir, 'music.ogg'))
 pg.mixer.music.set_volume(0.2)
 eat_snd.set_volume(0.1)
 collision_snd.set_volume(0.1)
@@ -358,7 +358,7 @@ def main():
         elif snake.body[-1].rect.topleft == food.rect.topleft:
             snake.eat()
             eat_snd.play()
-            if snake.length == 120:
+            if snake.length == 50:
                 VICTORY = True
                 return menu(victory_lines, snake.length)
             spawn_food()
